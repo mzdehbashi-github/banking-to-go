@@ -15,6 +15,7 @@ func main() {
 	if err != nil {
 		log.Fatal("error in loading configuration ", err)
 	}
+	log.Println("config: ", config)
 
 	conn, err := sql.Open(config.DBDrive, config.DBSource)
 	if err != nil {
