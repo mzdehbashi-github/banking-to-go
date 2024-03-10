@@ -1,0 +1,3 @@
+ALTER TABLE IF EXISTS "accounts" DROP CONSTRAINT IF EXISTS "accounts_fk_owner";
+
+DROP TABLE IF EXISTS users;

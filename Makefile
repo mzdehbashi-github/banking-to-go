@@ -4,11 +4,14 @@ createdb:
 dropdb:
 	docker exec -it database dropdb --if-exists --username=postgres banking
 
+migratenew:
+	migrate create -ext sql -dir db/migrations -seq add_users
+
 migrateup:
-	migrate -path db/migrations/ -database "postgres://postgres:password@localhost:5432/banking?sslmode=disable" -verbose up
+	migrate -path db/migrations/ -database "$(DB_SOURCE)" -verbose up
 
 migratedown:
-	migrate -path db/migrations/ -database "postgres://postgres:password@localhost:5432/banking?sslmode=disable" -verbose down
+	migrate -path db/migrations/ -database "$(DB_SOURCE)" -verbose down
 
 sqlc:
 	sqlc generate
@@ -16,4 +19,10 @@ sqlc:
 test:
 	go test ./... -v -cover
 
-.PHONY: createdb dropdb migrateup migratedown
+server:
+	go run main.go
+
+mock:
+	mockery --dir=db/sqlc --name=Store --output=db/sqlc/mocks --filename=store.go
+
+.PHONY: createdb dropdb migrateup migratedown server mock

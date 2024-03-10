@@ -86,7 +86,7 @@ func (q *Queries) ListAccounts(ctx context.Context, arg ListAccountsParams) ([]A
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Account
+	items := []Account{}
 	for rows.Next() {
 		var i Account
 		if err := rows.Scan(
@@ -171,7 +171,7 @@ func (q *Queries) UpdateAccountsBalance(ctx context.Context, arg UpdateAccountsB
 		return nil, err
 	}
 	defer rows.Close()
-	var items []UpdateAccountsBalanceRow
+	items := []UpdateAccountsBalanceRow{}
 	for rows.Next() {
 		var i UpdateAccountsBalanceRow
 		if err := rows.Scan(

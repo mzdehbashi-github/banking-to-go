@@ -11,19 +11,21 @@ import (
 func TestTransferTx(t *testing.T) {
 	store := NewStore(conn)
 
+	user1 := userFactory(store.GetQueries())
 	account1 := accountFactory(
-		store.Queries,
+		store.GetQueries(),
 		CreateAccountParams{
-			Owner:    "John",
+			Owner:    user1.Username,
 			Currency: CurrencyUSD,
 			Balance:  int64(200),
 		},
 	)
 
+	user2 := userFactory(store.GetQueries())
 	account2 := accountFactory(
-		store.Queries,
+		store.GetQueries(),
 		CreateAccountParams{
-			Owner:    "Joe",
+			Owner:    user2.Username,
 			Currency: CurrencyUSD,
 			Balance:  int64(200),
 		},

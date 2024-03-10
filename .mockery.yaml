@@ -1,0 +1,3 @@
+inpackage: false
+with-expecter: True
+testonly: false

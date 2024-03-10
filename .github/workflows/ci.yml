@@ -11,12 +11,17 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    environment: automated-test
+    env:
+      DB_SOURCE: postgres://postgres:${{ secrets.POSTGRES_PASSWORD }}@localhost:5432/banking?sslmode=disable
+      DB_DRIVER: postgres
+      SERVER_ADDRESS: "0.0.0.0:8080"
 
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_PASSWORD: password
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: banking
           POSTGRES_USER: postgres
         options: >-
@@ -41,12 +46,21 @@ jobs:
         sudo mv migrate /usr/bin/
         which migrate
 
+    - name: Install Mockery
+      run: |
+        curl -L https://github.com/vektra/mockery/releases/download/v2.42.0/mockery_2.42.0_Linux_x86_64.tar.gz | tar xvz
+        sudo mv mockery /usr/bin/
+        which mockery
+
 
     - name: Run migrations
       run: make migrateup
 
     - name: Build
       run: go build -v ./...
+
+    - name: Build
+      run: go run util/command/elipticalKeyPair/main.go
 
     - name: Test
       run: make test

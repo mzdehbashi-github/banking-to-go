@@ -10,14 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func accountFactory(queries *Queries, optionalParams ...CreateAccountParams) Account {
+func accountFactory(queries Querier, optionalParams ...CreateAccountParams) Account {
 	var arg CreateAccountParams
 
 	if len(optionalParams) > 0 {
 		arg = optionalParams[0]
 	} else {
+		user := userFactory(queries)
 		arg = CreateAccountParams{
-			Owner:    util.RandomOwner(),
+			Owner:    user.Username,
 			Balance:  util.RandomMoney(),
 			Currency: Currency(util.RandomCurrency()),
 		}
@@ -34,9 +35,10 @@ func accountFactory(queries *Queries, optionalParams ...CreateAccountParams) Acc
 func TestCreateAccount(t *testing.T) {
 	withTransaction(
 		t,
-		func(queries *Queries) {
+		func(queries Querier) {
+			user := userFactory(queries)
 			arg := CreateAccountParams{
-				Owner:    util.RandomOwner(),
+				Owner:    user.Username,
 				Balance:  util.RandomMoney(),
 				Currency: Currency(util.RandomCurrency()),
 			}
@@ -57,7 +59,7 @@ func TestCreateAccount(t *testing.T) {
 func TestGetAccount(t *testing.T) {
 	withTransaction(
 		t,
-		func(queries *Queries) {
+		func(queries Querier) {
 			account := accountFactory(queries)
 			fetchedAccount, err := queries.GetAccount(context.Background(), account.ID)
 			require.NoError(t, err)
@@ -69,7 +71,7 @@ func TestGetAccount(t *testing.T) {
 func TestUpdateAccount(t *testing.T) {
 	withTransaction(
 		t,
-		func(queries *Queries) {
+		func(queries Querier) {
 			account := accountFactory(queries)
 			updateArg := UpdateAccountParams{ID: account.ID, Balance: 255}
 			updatedAccount, err := queries.UpdateAccount(context.Background(), updateArg)
@@ -82,7 +84,7 @@ func TestUpdateAccount(t *testing.T) {
 func TestDeleteAccount(t *testing.T) {
 	withTransaction(
 		t,
-		func(queries *Queries) {
+		func(queries Querier) {
 			account := accountFactory(queries)
 			err := queries.DeleteAccound(context.Background(), account.ID)
 			require.NoError(t, err)
@@ -97,7 +99,7 @@ func TestDeleteAccount(t *testing.T) {
 func TestListAccounts(t *testing.T) {
 	withTransaction(
 		t,
-		func(queries *Queries) {
+		func(queries Querier) {
 
 			for i := 0; i < 10; i++ {
 				accountFactory(queries)

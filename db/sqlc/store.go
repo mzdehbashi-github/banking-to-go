@@ -7,12 +7,27 @@ import (
 	"log"
 )
 
-type Store struct {
+// go:generate mockery --name Store
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (*TransferTxResult, error)
+	GetQueries() Querier
+}
+
+type SQLStore struct {
 	*Queries
 	db *sql.DB
 }
 
-func (s *Store) execTransaction(ctx context.Context, fn func(*Queries) error) error {
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{db: db, Queries: New(db)}
+}
+
+func (s *SQLStore) GetQueries() Querier {
+	return s.Queries
+}
+
+func (s *SQLStore) execTransaction(ctx context.Context, fn func(*Queries) error) error {
 	tx, beginErr := s.db.BeginTx(ctx, nil)
 
 	if beginErr != nil {
@@ -37,10 +52,6 @@ func (s *Store) execTransaction(ctx context.Context, fn func(*Queries) error) er
 	return tx.Commit()
 }
 
-func NewStore(db *sql.DB) *Store {
-	return &Store{db: db, Queries: New(db)}
-}
-
 type TransferTxParams struct {
 	FromAccountID int64 `json:"from_account_id"`
 	ToAccountID   int64 `json:"to_account_id"`
@@ -55,9 +66,7 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-var txKey = struct{}{}
-
-func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (*TransferTxResult, error) {
+func (s *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (*TransferTxResult, error) {
 
 	var result TransferTxResult
 
@@ -110,14 +119,12 @@ func (s *Store) TransferTx(ctx context.Context, arg TransferTxParams) (*Transfer
 			return updateAccountsErr
 		}
 
-		log.Println("accounts, ", accounts)
 		if len(accounts) != 2 {
 			errMessage := fmt.Sprintf("error in updating accounts %d", len(accounts))
 			log.Println(errMessage)
 			return fmt.Errorf(errMessage)
 		}
 
-		log.Printf("%v %v", arg.FromAccountID, arg.ToAccountID)
 		if accounts[0].ID == arg.FromAccountID {
 			result.FromAccount = Account(accounts[0])
 			result.ToAccount = Account(accounts[1])
