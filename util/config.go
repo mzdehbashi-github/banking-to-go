@@ -1,34 +1,25 @@
 package util
 
 import (
-	"github.com/spf13/viper"
+	"os"
 )
 
 // Config stores all configuration of the application.
-// The values are read by viper from a config file or env variables.
 type Config struct {
-	DBDrive       string `mapstructure:"DB_DRIVER"`
-	DBSource      string `mapstructure:"DB_SOURCE"`
-	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
+	DBDriver      string
+	DBSource      string
+	ServerAddress string
+	PublicKey     string
+	PrivateKey    string
 }
 
-// LoadConfig reads configuration from a file or env variables
-func LoadConfig(path string) (Config, error) {
-	// viper.AddConfigPath(path)
-	// viper.SetConfigName("app")
-	// viper.SetConfigType("env") // json, xml
-	viper.AutomaticEnv()
-
-	// err = viper.ReadInConfig()
-	// if err != nil {
-	// 	return
-	// }
-	dbSource := viper.Get("DB_SOURCE")
-	serverAddress := viper.Get("SERVER_ADDRESS")
-	dbDriver := viper.Get("DB_DRIVER")
+// LoadConfig reads configuration from environment variables
+func LoadConfig() Config {
 	var C Config
-	C.DBDrive = dbDriver.(string)
-	C.DBSource = dbSource.(string)
-	C.ServerAddress = serverAddress.(string)
-	return C, nil
+	C.DBDriver = os.Getenv("DB_DRIVER")
+	C.DBSource = os.Getenv("DB_SOURCE")
+	C.ServerAddress = os.Getenv("SERVER_ADDRESS")
+	C.PublicKey = os.Getenv("PUBLIC_KEY")
+	C.PrivateKey = os.Getenv("PRIVATE_KEY")
+	return C
 }

@@ -3,18 +3,14 @@ package token
 import (
 	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-)
-
-const (
-	minSizeSecretKey = 3
 )
 
 type JWTMaker struct {
@@ -44,6 +40,31 @@ func loadPublicKeyFromFile(filePath string) (*ecdsa.PublicKey, error) {
 	return ecdsaPublicKey, nil
 }
 
+func loadPublicKeyFromString(keyString string) (*ecdsa.PublicKey, error) {
+
+	key, err := base64.StdEncoding.DecodeString(keyString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	block, _ := pem.Decode([]byte(key))
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the public key")
+	}
+
+	pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	ecdsaPublicKey, ok := pubKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, errors.New("invalid public key type")
+	}
+
+	return ecdsaPublicKey, nil
+}
+
 func loadPrivateKeyFromFile(filePath string) (*ecdsa.PrivateKey, error) {
 	// Read the private key file
 	keyBytes, err := os.ReadFile(filePath)
@@ -59,20 +80,36 @@ func loadPrivateKeyFromFile(filePath string) (*ecdsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-func NewJWTMaker() (TokenMaker, error) {
-	_, b, _, _ := runtime.Caller(0)
-	root := filepath.Join(filepath.Dir(b), "..")
-	privateKey, err := loadPrivateKeyFromFile(filepath.Join(root, "private.pem"))
-	if err != nil {
-		log.Fatal("error in reading private key: ", err)
-	}
-	publicKey, err := loadPublicKeyFromFile(filepath.Join(root, "public.pem"))
+func loadPrivateKeyFromString(keyString string) (*ecdsa.PrivateKey, error) {
+	key, err := base64.StdEncoding.DecodeString(keyString)
 	if err != nil {
 		log.Fatal(err)
 	}
+	block, _ := pem.Decode([]byte(key))
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the private key")
+	}
+
+	privKey, err := x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return privKey, nil
+}
+
+func NewJWTMaker(privateKeyString, publicKeyString string) (TokenMaker, error) {
+	privateKey, err := loadPrivateKeyFromString(privateKeyString)
+	if err != nil {
+		log.Fatal("error in parsing private key: ", err)
+	}
+
+	publicKey, err := loadPublicKeyFromString(publicKeyString)
+	if err != nil {
+		log.Fatal("error in parsing public key: ", err)
+	}
 
 	return &JWTMaker{publicKey: publicKey, privateKey: privateKey}, nil
-
 }
 
 func (jm *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {

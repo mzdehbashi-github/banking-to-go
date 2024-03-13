@@ -3,7 +3,6 @@ package api
 import (
 	db "gopsql/banking/db/sqlc"
 	"gopsql/banking/token"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -17,11 +16,10 @@ type Server struct {
 }
 
 // NewServer creates a new HTTP server and set up routing
-func NewServer(store db.Store) *Server {
-	tokenMaker, err := token.NewJWTMaker()
-	if err != nil {
-		log.Fatal("error creating token maker: ", err)
-	}
+func NewServer(
+	store db.Store,
+	tokenMaker token.TokenMaker,
+) *Server {
 
 	server := &Server{store: store, tokenMaker: tokenMaker}
 	router := gin.Default()

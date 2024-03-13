@@ -7,6 +7,9 @@ import (
 	"fmt"
 	db "gopsql/banking/db/sqlc"
 	"gopsql/banking/db/sqlc/mocks"
+	"gopsql/banking/token"
+	tokenMocks "gopsql/banking/token/mocks"
+	"gopsql/banking/util"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,7 +41,10 @@ func TestCreateAccount(t *testing.T) {
 		},
 	).Return(expectedAccount, nil).Once()
 
-	server := NewServer(mockStore)
+	config := util.LoadConfig()
+	tokenMaker, err := token.NewJWTMaker(config.PrivateKey, config.PublicKey)
+	require.NoError(t, err)
+	server := NewServer(mockStore, tokenMaker)
 
 	w := httptest.NewRecorder()
 	jsonValue, _ := json.Marshal(expectedAccount)
@@ -125,13 +131,14 @@ func TestGetAccount(t *testing.T) {
 	}
 
 	mockStore := mocks.NewStore(t)
+	tokenMaker := tokenMocks.NewTokenMaker(t)
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(
 			tc.name,
 			func(t *testing.T) {
 				tc.buildStubs(mockStore)
-				server := NewServer(mockStore)
+				server := NewServer(mockStore, tokenMaker)
 				w := httptest.NewRecorder()
 
 				req, err := http.NewRequest(

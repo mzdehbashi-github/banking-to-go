@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"gopsql/banking/api"
 	db "gopsql/banking/db/sqlc"
+	"gopsql/banking/token"
 	"gopsql/banking/util"
 	"log"
 
@@ -11,19 +12,19 @@ import (
 )
 
 func main() {
-	config, err := util.LoadConfig(".")
-	if err != nil {
-		log.Fatal("error in loading configuration ", err)
-	}
-	log.Println("config: ", config)
-
-	conn, err := sql.Open(config.DBDrive, config.DBSource)
+	config := util.LoadConfig()
+	conn, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatal("can not connect to DB", err)
 	}
 
 	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	tokenMaker, err := token.NewJWTMaker(config.PrivateKey, config.PublicKey)
+	if err != nil {
+		log.Fatal("error in initializing token maker", err)
+	}
+
+	server := api.NewServer(store, tokenMaker)
 	err = server.Start(config.ServerAddress)
 	if err != nil {
 		log.Fatal("can not start server", err)

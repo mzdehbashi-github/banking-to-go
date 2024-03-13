@@ -17,14 +17,9 @@ var conn *sql.DB
 // var dbs *pgxpool.Pool
 
 func TestMain(m *testing.M) {
+	config := util.LoadConfig()
 	var err error
-	var config util.Config
-	config, err = util.LoadConfig("../..")
-	if err != nil {
-		log.Fatal("can not load configuration ", err)
-	}
-
-	conn, err = sql.Open(config.DBDrive, config.DBSource)
+	conn, err = sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
 		log.Fatal("can not connect to DB", err)
 	}
@@ -33,6 +28,7 @@ func TestMain(m *testing.M) {
 	conn.SetMaxIdleConns(5)
 	conn.SetConnMaxIdleTime(2 * time.Second)
 	conn.SetConnMaxLifetime(5 * time.Second)
+	log.Println("conn: ", conn)
 
 	os.Exit(m.Run())
 }

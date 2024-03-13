@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	db "gopsql/banking/db/sqlc"
 	"gopsql/banking/db/sqlc/mocks"
+	"gopsql/banking/token"
 	"gopsql/banking/util"
 	"net/http"
 	"net/http/httptest"
@@ -40,7 +41,10 @@ func TestCreateToken(t *testing.T) {
 		nil,
 	).Once()
 
-	server := NewServer(mockStore)
+	config := util.LoadConfig()
+	tokenMaker, err := token.NewJWTMaker(config.PrivateKey, config.PublicKey)
+	require.NoError(t, err)
+	server := NewServer(mockStore, tokenMaker)
 
 	w := httptest.NewRecorder()
 	jsonValue, _ := json.Marshal(reqParam)

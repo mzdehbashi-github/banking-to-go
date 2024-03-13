@@ -1,6 +1,7 @@
 package token
 
 import (
+	"gopsql/banking/util"
 	"testing"
 	"time"
 
@@ -8,7 +9,8 @@ import (
 )
 
 func TestCreateAndVerifyJWTToken(t *testing.T) {
-	jwtMaker, err := NewJWTMaker()
+	config := util.LoadConfig()
+	jwtMaker, err := NewJWTMaker(config.PrivateKey, config.PublicKey)
 	require.NoError(t, err)
 	require.NotEmpty(t, jwtMaker)
 

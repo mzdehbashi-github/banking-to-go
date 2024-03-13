@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	db "gopsql/banking/db/sqlc"
 	"gopsql/banking/db/sqlc/mocks"
+	tokenMocks "gopsql/banking/token/mocks"
 	"gopsql/banking/util"
 	"net/http"
 	"net/http/httptest"
@@ -46,7 +47,8 @@ func TestCreateUser(t *testing.T) {
 		nil,
 	).Once()
 
-	server := NewServer(mockStore)
+	tokenMaker := tokenMocks.NewTokenMaker(t)
+	server := NewServer(mockStore, tokenMaker)
 
 	w := httptest.NewRecorder()
 	jsonValue, _ := json.Marshal(reqParam)
