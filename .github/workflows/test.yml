@@ -1,6 +1,7 @@
-name: ci-test
+name: Run unit tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
